@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="th">
+  <body>
+    <h1>ทักษะของฉัน</h1>
+    <ul id="skills"></ul>
+    <form id="skill-form">
+      <input id="skill-name" placeholder="ชื่อทักษะ" required />
+      <button type="submit">เพิ่มทักษะ</button>
+    </form>
+    <script>
+      async function loadSkills() {
+        const response = await fetch("/api/db-skills");
+        const skills = await response.json();
+        const list = document.querySelector("#skills");
+
+        list.innerHTML = "";
+
+        for (const skill of skills) {
+          const item = document.createElement("li");
+          item.textContent = skill.name + " ";
+
+          const deleteButton = document.createElement("button");
+          deleteButton.type = "button";
+          deleteButton.textContent = "ลบ";
+
+          const editButton = document.createElement("button");
+          editButton.type = "button";
+          editButton.textContent = "แก้ไข";
+
+          deleteButton.addEventListener("click", async () => {
+            const response = await fetch("/api/db-skills/" + skill.id, {
+              method: "DELETE",
+            });
+
+            if (!response.ok) {
+              alert("ลบทักษะไม่สำเร็จ");
+              return;
+            }
+
+            loadSkills();
+          });
+
+          editButton.addEventListener("click", async () => {
+            const newName = prompt("แก้ชื่อทักษะ", skill.name);
+
+            if (newName === null || newName.trim() === "") {
+              return;
+            }
+
+            const response = await fetch("/api/db-skills/" + skill.id, {
+              method: "PUT",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ name: newName }),
+            });
+
+            if (!response.ok) {
+              alert("แก้ไขทักษะไม่สำเร็จ");
+              return;
+            }
+
+            loadSkills();
+          });
+
+          item.appendChild(editButton);
+          item.appendChild(deleteButton);
+          list.appendChild(item);
+        }
+      }
+
+      const form = document.querySelector("#skill-form");
+
+      form.addEventListener("submit", async (event) => {
+        event.preventDefault();
+
+        const name = document.querySelector("#skill-name").value;
+
+        const response = await fetch("/api/db-skills", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ name: name }),
+        });
+
+        if (!response.ok) {
+          alert("เพิ่มทักษะไม่สำเร็จ");
+          return;
+        }
+
+        form.reset();
+        loadSkills();
+      });
+
+      loadSkills();
+    </script>
+  </body>
+</html>

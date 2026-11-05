@@ -1,11 +1,15 @@
+require("dotenv").config();
+
 const express = require("express");
 const app = express();
 const pool = require("./db");
 const skillsRouter = require("./routes/skills");
+const authRouter = require("./routes/auth")
 
 app.use(express.static("public"));
 app.use(express.json());
 app.use("/api", skillsRouter);
+app.use("/api/auth", authRouter)
 
 const skills = ["Node.js", "JavaScript", "HTML"];
 
@@ -51,31 +55,6 @@ app.put("/api/skills/:id", (req, res) => {
 
   skills[id] = req.body.name;
   res.json({ updated: skills[id] });
-});
-
-app.post("/api/db-skills", async (req, res) => {
-  const { name, category } = req.body;
-
-  if (
-    typeof name !== "string" ||
-    name.trim() === "" ||
-    typeof category !== "string" ||
-    category.trim() === ""
-  ) {
-    return res.status(400).json({ message: "กรุณาระบุชื่อทักษะ" });
-  }
-
-  try {
-    const result = await pool.query(
-      "INSERT INTO skills (name, category) VALUES ($1, $2) RETURNING *",
-      [name.trim(), category.trim()],
-    );
-
-    res.status(201).json(result.rows[0]);
-  } catch (e) {
-    console.error(e);
-    res.status(500).json({ message: "เพิ่มทักษะไม่สำเร็จ" });
-  }
 });
 
 app.listen(3000, () => {
